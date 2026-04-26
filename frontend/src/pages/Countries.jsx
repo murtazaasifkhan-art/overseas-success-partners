@@ -17,30 +17,25 @@ export default function Countries() {
   if (loading) return <Loading />;
 
   return (
-    <div>
-      <h2 style={{ marginBottom: '0.5rem' }}>Study Destinations in Europe</h2>
-      <p style={{ color: 'var(--gray-500)', marginBottom: '2rem' }}>
-        Explore detailed information about studying in each country including eligibility 
+    <div className="animate-fade-in">
+      <h2 className="mb-1">Study Destinations in Europe</h2>
+      <p className="text-muted mb-3">
+        Explore detailed information about studying in each country including eligibility
         requirements, visa processes, and available universities.
       </p>
 
-      <div className="grid grid-2">
+      <div className="grid grid-2 stagger">
         {countries.map((country) => (
           <Link to={`/countries/${country.code}`} key={country.code} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '2.5rem' }}>{country.flagEmoji}</span>
-                <div>
-                  <h3>{country.name}</h3>
-                  <span className="badge badge-info">{country.code}</span>
+            <div className="card card-hover country-list-card">
+              <span className="flag-lg">{country.flagEmoji}</span>
+              <div>
+                <h3>{country.name}</h3>
+                <p>{country.description}</p>
+                <div className="meta">
+                  <span>Tuition: &euro;{country.eligibilityCriteria?.financial?.averageTuitionMin?.toLocaleString()} - &euro;{country.eligibilityCriteria?.financial?.averageTuitionMax?.toLocaleString()}/yr</span>
+                  <span>Living: ~&euro;{country.eligibilityCriteria?.financial?.averageLivingCostPerYear?.toLocaleString()}/yr</span>
                 </div>
-              </div>
-              <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: '1rem' }}>
-                {country.description}
-              </p>
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.8rem', color: 'var(--gray-500)' }}>
-                <span>Tuition: €{country.eligibilityCriteria?.financial?.averageTuitionMin?.toLocaleString()} - €{country.eligibilityCriteria?.financial?.averageTuitionMax?.toLocaleString()}/yr</span>
-                <span>Living: ~€{country.eligibilityCriteria?.financial?.averageLivingCostPerYear?.toLocaleString()}/yr</span>
               </div>
             </div>
           </Link>

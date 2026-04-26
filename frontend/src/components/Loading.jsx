@@ -1,8 +1,8 @@
 export default function Loading({ message = 'Loading...' }) {
   return (
-    <div className="loading">
+    <div className="loading-container">
       <div className="spinner" />
-      <p>{message}</p>
+      <p className="loading-text">{message}</p>
     </div>
   );
 }

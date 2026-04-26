@@ -127,8 +127,8 @@ export default function Profile() {
   if (loading) return <Loading />;
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <h2 style={{ marginBottom: '1.5rem' }}>My Profile</h2>
+    <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <h2 className="mb-2">My Profile</h2>
 
       {message && (
         <div className={`alert ${message.includes('success') ? 'alert-success' : 'alert-error'}`}>

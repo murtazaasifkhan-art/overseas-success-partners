@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
+const path = require('path');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -11,6 +12,8 @@ const universityRoutes = require('./routes/universities');
 const eligibilityRoutes = require('./routes/eligibility');
 const recommendationRoutes = require('./routes/recommendations');
 const adminRoutes = require('./routes/admin');
+const siteConfigRoutes = require('./routes/siteconfig');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 
@@ -25,6 +28,9 @@ app.use('/api/universities', universityRoutes);
 app.use('/api/eligibility', eligibilityRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/siteconfig', siteConfigRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

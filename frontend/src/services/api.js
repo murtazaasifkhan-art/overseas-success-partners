@@ -1,11 +1,19 @@
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_AUTH = import.meta.env.VITE_API_AUTH || '';
 
-const api = axios.create({
+const apiConfig = {
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
-});
+};
+
+if (API_AUTH) {
+  apiConfig.headers['X-Tunnel-Auth'] = `Basic ${btoa(API_AUTH)}`;
+  apiConfig.auth = { username: API_AUTH.split(':')[0], password: API_AUTH.split(':')[1] };
+}
+
+const api = axios.create(apiConfig);
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -71,6 +79,18 @@ export const adminAPI = {
   updateUniversity: (id, data) => api.put(`/admin/universities/${id}`, data),
   deleteUniversity: (id) => api.delete(`/admin/universities/${id}`),
   getUsers: () => api.get('/admin/users'),
+};
+
+export const siteConfigAPI = {
+  get: () => api.get('/siteconfig'),
+  update: (data) => api.put('/siteconfig', data),
+  getThemes: () => api.get('/siteconfig/themes'),
+  getTheme: (id) => api.get(`/siteconfig/themes/${id}`),
+  createTheme: (data) => api.post('/siteconfig/themes', data),
+  updateTheme: (id, data) => api.put(`/siteconfig/themes/${id}`, data),
+  deleteTheme: (id) => api.delete(`/siteconfig/themes/${id}`),
+  activateTheme: (id) => api.post(`/siteconfig/themes/${id}/activate`),
+  uploadLogo: (formData) => api.post('/upload/logo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };
 
 export default api;
