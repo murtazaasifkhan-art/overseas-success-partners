@@ -429,6 +429,27 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .country-list-card .meta { display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--color-text-muted); }
 
 /* --- Country Detail --- */
+.country-detail-page {
+  position: relative;
+  overflow: hidden;
+}
+.country-bg-flag {
+  position: fixed;
+  top: 50%;
+  right: -5%;
+  transform: translateY(-50%);
+  font-size: 20rem;
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 0;
+  line-height: 1;
+  filter: grayscale(30%);
+}
+[data-theme="dark"] .country-bg-flag { opacity: 0.04; }
+.country-detail-page > *:not(.country-bg-flag) {
+  position: relative;
+  z-index: 1;
+}
 .country-detail-header {
   display: flex;
   align-items: center;
