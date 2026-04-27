@@ -29,8 +29,11 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-inner">
         <Link to="/" className="navbar-brand">
-          <img src={logoUrl || '/logo.jpeg'} alt={appName} className="navbar-logo" />
-          {appName}
+          <img src="/globe-logo.svg" alt="Globe" className="navbar-globe" />
+          <div className="navbar-brand-text">
+            <span className="brand-name">OVERSEAS SUCCESS<br/>PARTNERS</span>
+            <span className="brand-tagline">GLOBAL CONSULTANCY SERVICES</span>
+          </div>
         </Link>
 
         <button className="nav-hamburger" onClick={() => setMenuOpen(!menuOpen)}

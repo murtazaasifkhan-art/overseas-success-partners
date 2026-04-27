@@ -111,16 +111,30 @@ img { max-width: 100%; height: auto; }
 .navbar-brand {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: var(--color-primary);
+  gap: 0.75rem;
   text-decoration: none;
   transition: transform 0.2s;
 }
-.navbar-brand:hover { transform: scale(1.02); color: var(--color-primary); }
-.navbar-brand img { height: 40px; width: auto; border-radius: 4px; object-fit: contain; }
+.navbar-brand:hover { transform: scale(1.02); }
+.navbar-globe { height: 48px; width: 48px; object-fit: contain; flex-shrink: 0; }
+.navbar-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-name {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--brand-name-color, #1a237e);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.brand-tagline {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 0.55rem;
+  color: var(--brand-tagline-color, #546e7a);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
 .navbar-links { display: flex; align-items: center; gap: 0.25rem; }
 .navbar-links a, .navbar-links button {
   color: var(--color-nav-text);
