@@ -5,7 +5,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
 
 const authenticate = async (req, res, next) => {
   try {
-    const header = req.headers.authorization;
+    const header = req.headers['x-auth-token'] || req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Authentication required' });
     }

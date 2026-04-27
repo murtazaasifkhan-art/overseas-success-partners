@@ -1,24 +1,16 @@
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const API_AUTH = import.meta.env.VITE_API_AUTH || '';
 
-const apiConfig = {
+const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
-};
-
-if (API_AUTH) {
-  apiConfig.headers['X-Tunnel-Auth'] = `Basic ${btoa(API_AUTH)}`;
-  apiConfig.auth = { username: API_AUTH.split(':')[0], password: API_AUTH.split(':')[1] };
-}
-
-const api = axios.create(apiConfig);
+});
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers['X-Auth-Token'] = `Bearer ${token}`;
   }
   return config;
 });
