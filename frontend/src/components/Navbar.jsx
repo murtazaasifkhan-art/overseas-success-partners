@@ -29,7 +29,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-inner">
         <Link to="/" className="navbar-brand">
-          {logoUrl ? <img src={logoUrl} alt={appName} /> : <span>🎓</span>}
+          <img src={logoUrl || '/logo.jpeg'} alt={appName} className="navbar-logo" />
           {appName}
         </Link>
 

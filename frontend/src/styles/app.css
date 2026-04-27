@@ -120,7 +120,7 @@ img { max-width: 100%; height: auto; }
   transition: transform 0.2s;
 }
 .navbar-brand:hover { transform: scale(1.02); color: var(--color-primary); }
-.navbar-brand img { height: 36px; width: auto; border-radius: 6px; }
+.navbar-brand img { height: 40px; width: auto; border-radius: 4px; object-fit: contain; }
 .navbar-links { display: flex; align-items: center; gap: 0.25rem; }
 .navbar-links a, .navbar-links button {
   color: var(--color-nav-text);
