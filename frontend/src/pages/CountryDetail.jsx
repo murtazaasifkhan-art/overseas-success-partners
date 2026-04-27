@@ -24,11 +24,11 @@ export default function CountryDetail() {
 
   return (
     <div className="animate-fade-in country-detail-page">
-      <div className="country-bg-flag" aria-hidden="true">{country.flagEmoji}</div>
+      <img src={`https://flagcdn.com/w640/${country.code.toLowerCase()}.png`} alt="" className="country-bg-flag" aria-hidden="true" />
       <Link to="/countries" className="back-link">&larr; Back to Countries</Link>
 
       <div className="country-detail-header">
-        <span className="flag-xl">{country.flagEmoji}</span>
+        <img src={`https://flagcdn.com/w160/${country.code.toLowerCase()}.png`} alt={country.name} className="flag-img-xl" />
         <div>
           <h1>Study in {country.name}</h1>
           <p>{country.description}</p>

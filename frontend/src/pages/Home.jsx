@@ -64,7 +64,7 @@ export default function Home() {
         <div className="country-grid stagger">
           {countries.map((c) => (
             <Link key={c.code} to={`/countries/${c.code}`} className="card card-hover country-flag-card">
-              <span className="flag">{c.flag}</span>
+              <img src={`https://flagcdn.com/w160/${c.code.toLowerCase()}.png`} alt={c.name} className="flag-img" />
               <span className="name">{c.name}</span>
             </Link>
           ))}

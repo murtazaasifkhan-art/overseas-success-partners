@@ -28,7 +28,7 @@ export default function Countries() {
         {countries.map((country) => (
           <Link to={`/countries/${country.code}`} key={country.code} style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="card card-hover country-list-card">
-              <span className="flag-lg">{country.flagEmoji}</span>
+              <img src={`https://flagcdn.com/w160/${country.code.toLowerCase()}.png`} alt={country.name} className="flag-img-lg" />
               <div>
                 <h3>{country.name}</h3>
                 <p>{country.description}</p>
