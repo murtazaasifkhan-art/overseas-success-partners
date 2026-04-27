@@ -29,8 +29,8 @@ export default function Register() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="card">
+    <div className="auth-container animate-fade-in">
+      <div className="card auth-card">
         <h2>Create Account</h2>
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>

@@ -10,7 +10,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers['X-Auth-Token'] = `Bearer ${token}`;
   }
   return config;
 });
@@ -71,6 +71,18 @@ export const adminAPI = {
   updateUniversity: (id, data) => api.put(`/admin/universities/${id}`, data),
   deleteUniversity: (id) => api.delete(`/admin/universities/${id}`),
   getUsers: () => api.get('/admin/users'),
+};
+
+export const siteConfigAPI = {
+  get: () => api.get('/siteconfig'),
+  update: (data) => api.put('/siteconfig', data),
+  getThemes: () => api.get('/siteconfig/themes'),
+  getTheme: (id) => api.get(`/siteconfig/themes/${id}`),
+  createTheme: (data) => api.post('/siteconfig/themes', data),
+  updateTheme: (id, data) => api.put(`/siteconfig/themes/${id}`, data),
+  deleteTheme: (id) => api.delete(`/siteconfig/themes/${id}`),
+  activateTheme: (id) => api.post(`/siteconfig/themes/${id}/activate`),
+  uploadLogo: (formData) => api.post('/upload/logo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };
 
 export default api;
