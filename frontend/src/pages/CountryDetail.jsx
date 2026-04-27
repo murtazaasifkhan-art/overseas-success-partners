@@ -23,7 +23,8 @@ export default function CountryDetail() {
   const guide = country.studyGuide;
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in country-detail-page">
+      <div className="country-bg-flag" aria-hidden="true">{country.flagEmoji}</div>
       <Link to="/countries" className="back-link">&larr; Back to Countries</Link>
 
       <div className="country-detail-header">

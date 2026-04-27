@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { countryAPI } from '../services/api';
 
 const defaultFeatures = [
   { icon: '🎯', title: 'Eligibility Check', description: 'Instantly evaluate your eligibility for studying in 5 European countries based on your academic background, language skills, and finances.' },
@@ -8,17 +10,16 @@ const defaultFeatures = [
   { icon: '🗺️', title: 'Step-by-Step Guides', description: 'Get detailed visa processes, document checklists, and application timelines for each country.' },
 ];
 
-const countries = [
-  { code: 'DE', flag: '🇩🇪', name: 'Germany' },
-  { code: 'FR', flag: '🇫🇷', name: 'France' },
-  { code: 'IT', flag: '🇮🇹', name: 'Italy' },
-  { code: 'NL', flag: '🇳🇱', name: 'Netherlands' },
-  { code: 'RO', flag: '🇷🇴', name: 'Romania' },
-];
-
 export default function Home() {
   const { user } = useAuth();
   const { siteConfig } = useTheme();
+  const [countries, setCountries] = useState([]);
+
+  useEffect(() => {
+    countryAPI.list().then(res => {
+      setCountries(res.data.countries.map(c => ({ code: c.code, flag: c.flagEmoji, name: c.name })));
+    }).catch(() => {});
+  }, []);
 
   const heroTitle = siteConfig?.homepage?.heroTitle || 'Your Journey to Study in Europe Starts Here';
   const heroSubtitle = siteConfig?.homepage?.heroSubtitle || 'Evaluate your eligibility, explore top universities, and get personalized guidance for studying in Germany, France, Italy, Netherlands, and Romania.';
