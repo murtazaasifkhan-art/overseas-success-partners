@@ -6,7 +6,7 @@ export default function Footer() {
 
   return (
     <footer className="footer">
-      &copy; {new Date().getFullYear()} {appName}. Helping students achieve their study abroad dreams.
+      &copy; {new Date().getFullYear()} Overseas Success Partners - Global Consultancy Services. Helping students achieve their study abroad dreams.
     </footer>
   );
 }
