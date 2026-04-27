@@ -467,11 +467,226 @@ function BrandingPanel() {
 }
 
 /* =================== Countries =================== */
+function CountryForm({ initial, onSave, onCancel, saving }) {
+  const empty = {
+    name: '', code: '', flagEmoji: '', description: '',
+    eligibilityCriteria: {
+      academic: { minimumDegree: 'high_school', minimumGPA: '', gpaScale: 4, notes: '' },
+      language: { englishRequired: true, minimumIELTS: '', minimumTOEFL: '', localLanguageRequired: false, localLanguage: '', localLanguageLevel: '', notes: '' },
+      financial: { proofRequired: true, minimumBankBalance: '', currency: 'EUR', scholarshipsAvailable: false, averageTuitionMin: '', averageTuitionMax: '', averageLivingCostPerYear: '', notes: '' },
+      visa: { studentVisaRequired: true, processingTimeWeeksMin: '', processingTimeWeeksMax: '', workPermitWithStudy: false, maxWorkHoursPerWeek: '', healthInsuranceRequired: true, notes: '' },
+    },
+    studyGuide: { visaProcess: [], requiredDocuments: [], applicationTimeline: [], officialLinks: [] },
+  };
+
+  const [form, setForm] = useState(() => {
+    if (!initial) return empty;
+    return {
+      name: initial.name || '', code: initial.code || '', flagEmoji: initial.flagEmoji || '', description: initial.description || '',
+      eligibilityCriteria: {
+        academic: { minimumDegree: initial.eligibilityCriteria?.academic?.minimumDegree || 'high_school', minimumGPA: initial.eligibilityCriteria?.academic?.minimumGPA || '', gpaScale: initial.eligibilityCriteria?.academic?.gpaScale || 4, notes: initial.eligibilityCriteria?.academic?.notes || '' },
+        language: { englishRequired: initial.eligibilityCriteria?.language?.englishRequired ?? true, minimumIELTS: initial.eligibilityCriteria?.language?.minimumIELTS || '', minimumTOEFL: initial.eligibilityCriteria?.language?.minimumTOEFL || '', localLanguageRequired: initial.eligibilityCriteria?.language?.localLanguageRequired || false, localLanguage: initial.eligibilityCriteria?.language?.localLanguage || '', localLanguageLevel: initial.eligibilityCriteria?.language?.localLanguageLevel || '', notes: initial.eligibilityCriteria?.language?.notes || '' },
+        financial: { proofRequired: initial.eligibilityCriteria?.financial?.proofRequired ?? true, minimumBankBalance: initial.eligibilityCriteria?.financial?.minimumBankBalance || '', currency: initial.eligibilityCriteria?.financial?.currency || 'EUR', scholarshipsAvailable: initial.eligibilityCriteria?.financial?.scholarshipsAvailable || false, averageTuitionMin: initial.eligibilityCriteria?.financial?.averageTuitionMin || '', averageTuitionMax: initial.eligibilityCriteria?.financial?.averageTuitionMax || '', averageLivingCostPerYear: initial.eligibilityCriteria?.financial?.averageLivingCostPerYear || '', notes: initial.eligibilityCriteria?.financial?.notes || '' },
+        visa: { studentVisaRequired: initial.eligibilityCriteria?.visa?.studentVisaRequired ?? true, processingTimeWeeksMin: initial.eligibilityCriteria?.visa?.processingTimeWeeks?.min || '', processingTimeWeeksMax: initial.eligibilityCriteria?.visa?.processingTimeWeeks?.max || '', workPermitWithStudy: initial.eligibilityCriteria?.visa?.workPermitWithStudy || false, maxWorkHoursPerWeek: initial.eligibilityCriteria?.visa?.maxWorkHoursPerWeek || '', healthInsuranceRequired: initial.eligibilityCriteria?.visa?.healthInsuranceRequired ?? true, notes: initial.eligibilityCriteria?.visa?.notes || '' },
+      },
+      studyGuide: {
+        visaProcess: initial.studyGuide?.visaProcess || [],
+        requiredDocuments: initial.studyGuide?.requiredDocuments || [],
+        applicationTimeline: initial.studyGuide?.applicationTimeline || [],
+        officialLinks: initial.studyGuide?.officialLinks || [],
+      },
+    };
+  });
+
+  const [activeSection, setActiveSection] = useState('basic');
+  const [newDoc, setNewDoc] = useState('');
+  const [newLink, setNewLink] = useState({ title: '', url: '' });
+  const [newStep, setNewStep] = useState({ title: '', description: '' });
+  const [newTimeline, setNewTimeline] = useState({ month: '', activity: '' });
+
+  const updateNested = (path, value) => {
+    const keys = path.split('.');
+    setForm(prev => {
+      const copy = JSON.parse(JSON.stringify(prev));
+      let obj = copy;
+      for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+      obj[keys[keys.length - 1]] = value;
+      return copy;
+    });
+  };
+
+  const handleSubmit = () => {
+    const data = JSON.parse(JSON.stringify(form));
+    const ec = data.eligibilityCriteria;
+    ec.academic.minimumGPA = ec.academic.minimumGPA ? Number(ec.academic.minimumGPA) : undefined;
+    ec.academic.gpaScale = Number(ec.academic.gpaScale);
+    ec.language.minimumIELTS = ec.language.minimumIELTS ? Number(ec.language.minimumIELTS) : undefined;
+    ec.language.minimumTOEFL = ec.language.minimumTOEFL ? Number(ec.language.minimumTOEFL) : undefined;
+    ec.financial.minimumBankBalance = ec.financial.minimumBankBalance ? Number(ec.financial.minimumBankBalance) : undefined;
+    ec.financial.averageTuitionMin = ec.financial.averageTuitionMin ? Number(ec.financial.averageTuitionMin) : undefined;
+    ec.financial.averageTuitionMax = ec.financial.averageTuitionMax ? Number(ec.financial.averageTuitionMax) : undefined;
+    ec.financial.averageLivingCostPerYear = ec.financial.averageLivingCostPerYear ? Number(ec.financial.averageLivingCostPerYear) : undefined;
+    ec.visa.processingTimeWeeks = { min: Number(ec.visa.processingTimeWeeksMin) || undefined, max: Number(ec.visa.processingTimeWeeksMax) || undefined };
+    delete ec.visa.processingTimeWeeksMin;
+    delete ec.visa.processingTimeWeeksMax;
+    ec.visa.maxWorkHoursPerWeek = ec.visa.maxWorkHoursPerWeek ? Number(ec.visa.maxWorkHoursPerWeek) : undefined;
+    onSave(data);
+  };
+
+  const sections = ['basic', 'academic', 'language', 'financial', 'visa', 'documents', 'links'];
+
+  return (
+    <div className="card mb-2">
+      <div className="tabs mb-2" style={{ flexWrap: 'wrap' }}>
+        {sections.map(s => (
+          <button key={s} className={`tab ${activeSection === s ? 'active' : ''}`} onClick={() => setActiveSection(s)}>
+            {s === 'basic' ? 'Basic Info' : s === 'academic' ? 'Academic' : s === 'language' ? 'Language' : s === 'financial' ? 'Financial' : s === 'visa' ? 'Visa' : s === 'documents' ? 'Documents & Steps' : 'Official Links'}
+          </button>
+        ))}
+      </div>
+
+      {activeSection === 'basic' && (
+        <div className="profile-grid">
+          <div className="form-group"><label>Country Name *</label><input className="form-control" value={form.name} onChange={e => updateNested('name', e.target.value)} placeholder="e.g. Germany" /></div>
+          <div className="form-group"><label>Country Code * (2-letter)</label><input className="form-control" value={form.code} onChange={e => updateNested('code', e.target.value.toUpperCase())} placeholder="e.g. DE" maxLength={3} /></div>
+          <div className="form-group"><label>Flag Emoji</label><input className="form-control" value={form.flagEmoji} onChange={e => updateNested('flagEmoji', e.target.value)} placeholder="e.g. 🇩🇪" /></div>
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}><label>Description</label><textarea className="form-control" rows={3} value={form.description} onChange={e => updateNested('description', e.target.value)} placeholder="Brief description about studying in this country..." /></div>
+        </div>
+      )}
+
+      {activeSection === 'academic' && (
+        <div className="profile-grid">
+          <div className="form-group"><label>Minimum Degree</label>
+            <select className="form-control" value={form.eligibilityCriteria.academic.minimumDegree} onChange={e => updateNested('eligibilityCriteria.academic.minimumDegree', e.target.value)}>
+              <option value="high_school">High School</option><option value="bachelors">Bachelors</option><option value="masters">Masters</option>
+            </select>
+          </div>
+          <div className="form-group"><label>Minimum GPA</label><input type="number" step="0.1" className="form-control" value={form.eligibilityCriteria.academic.minimumGPA} onChange={e => updateNested('eligibilityCriteria.academic.minimumGPA', e.target.value)} placeholder="e.g. 2.5" /></div>
+          <div className="form-group"><label>GPA Scale</label><input type="number" className="form-control" value={form.eligibilityCriteria.academic.gpaScale} onChange={e => updateNested('eligibilityCriteria.academic.gpaScale', e.target.value)} placeholder="4.0" /></div>
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}><label>Academic Notes</label><textarea className="form-control" rows={2} value={form.eligibilityCriteria.academic.notes} onChange={e => updateNested('eligibilityCriteria.academic.notes', e.target.value)} placeholder="Additional notes about academic requirements..." /></div>
+        </div>
+      )}
+
+      {activeSection === 'language' && (
+        <div className="profile-grid">
+          <div className="form-group"><label><input type="checkbox" checked={form.eligibilityCriteria.language.englishRequired} onChange={e => updateNested('eligibilityCriteria.language.englishRequired', e.target.checked)} /> English Required</label></div>
+          <div className="form-group"><label>Min IELTS Score</label><input type="number" step="0.5" className="form-control" value={form.eligibilityCriteria.language.minimumIELTS} onChange={e => updateNested('eligibilityCriteria.language.minimumIELTS', e.target.value)} placeholder="e.g. 6.0" /></div>
+          <div className="form-group"><label>Min TOEFL Score</label><input type="number" className="form-control" value={form.eligibilityCriteria.language.minimumTOEFL} onChange={e => updateNested('eligibilityCriteria.language.minimumTOEFL', e.target.value)} placeholder="e.g. 80" /></div>
+          <div className="form-group"><label><input type="checkbox" checked={form.eligibilityCriteria.language.localLanguageRequired} onChange={e => updateNested('eligibilityCriteria.language.localLanguageRequired', e.target.checked)} /> Local Language Required</label></div>
+          <div className="form-group"><label>Local Language Name</label><input className="form-control" value={form.eligibilityCriteria.language.localLanguage} onChange={e => updateNested('eligibilityCriteria.language.localLanguage', e.target.value)} placeholder="e.g. German" /></div>
+          <div className="form-group"><label>Local Language Level</label><input className="form-control" value={form.eligibilityCriteria.language.localLanguageLevel} onChange={e => updateNested('eligibilityCriteria.language.localLanguageLevel', e.target.value)} placeholder="e.g. B1" /></div>
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}><label>Language Notes</label><textarea className="form-control" rows={2} value={form.eligibilityCriteria.language.notes} onChange={e => updateNested('eligibilityCriteria.language.notes', e.target.value)} /></div>
+        </div>
+      )}
+
+      {activeSection === 'financial' && (
+        <div className="profile-grid">
+          <div className="form-group"><label><input type="checkbox" checked={form.eligibilityCriteria.financial.proofRequired} onChange={e => updateNested('eligibilityCriteria.financial.proofRequired', e.target.checked)} /> Financial Proof Required</label></div>
+          <div className="form-group"><label>Minimum Bank Balance</label><input type="number" className="form-control" value={form.eligibilityCriteria.financial.minimumBankBalance} onChange={e => updateNested('eligibilityCriteria.financial.minimumBankBalance', e.target.value)} placeholder="e.g. 11208" /></div>
+          <div className="form-group"><label>Currency</label><input className="form-control" value={form.eligibilityCriteria.financial.currency} onChange={e => updateNested('eligibilityCriteria.financial.currency', e.target.value)} placeholder="EUR" /></div>
+          <div className="form-group"><label><input type="checkbox" checked={form.eligibilityCriteria.financial.scholarshipsAvailable} onChange={e => updateNested('eligibilityCriteria.financial.scholarshipsAvailable', e.target.checked)} /> Scholarships Available</label></div>
+          <div className="form-group"><label>Avg Tuition Min (per year)</label><input type="number" className="form-control" value={form.eligibilityCriteria.financial.averageTuitionMin} onChange={e => updateNested('eligibilityCriteria.financial.averageTuitionMin', e.target.value)} /></div>
+          <div className="form-group"><label>Avg Tuition Max (per year)</label><input type="number" className="form-control" value={form.eligibilityCriteria.financial.averageTuitionMax} onChange={e => updateNested('eligibilityCriteria.financial.averageTuitionMax', e.target.value)} /></div>
+          <div className="form-group"><label>Avg Living Cost (per year)</label><input type="number" className="form-control" value={form.eligibilityCriteria.financial.averageLivingCostPerYear} onChange={e => updateNested('eligibilityCriteria.financial.averageLivingCostPerYear', e.target.value)} /></div>
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}><label>Financial Notes</label><textarea className="form-control" rows={2} value={form.eligibilityCriteria.financial.notes} onChange={e => updateNested('eligibilityCriteria.financial.notes', e.target.value)} /></div>
+        </div>
+      )}
+
+      {activeSection === 'visa' && (
+        <div className="profile-grid">
+          <div className="form-group"><label><input type="checkbox" checked={form.eligibilityCriteria.visa.studentVisaRequired} onChange={e => updateNested('eligibilityCriteria.visa.studentVisaRequired', e.target.checked)} /> Student Visa Required</label></div>
+          <div className="form-group"><label>Processing Time (min weeks)</label><input type="number" className="form-control" value={form.eligibilityCriteria.visa.processingTimeWeeksMin} onChange={e => updateNested('eligibilityCriteria.visa.processingTimeWeeksMin', e.target.value)} /></div>
+          <div className="form-group"><label>Processing Time (max weeks)</label><input type="number" className="form-control" value={form.eligibilityCriteria.visa.processingTimeWeeksMax} onChange={e => updateNested('eligibilityCriteria.visa.processingTimeWeeksMax', e.target.value)} /></div>
+          <div className="form-group"><label><input type="checkbox" checked={form.eligibilityCriteria.visa.workPermitWithStudy} onChange={e => updateNested('eligibilityCriteria.visa.workPermitWithStudy', e.target.checked)} /> Work Permit With Study</label></div>
+          <div className="form-group"><label>Max Work Hours/Week</label><input type="number" className="form-control" value={form.eligibilityCriteria.visa.maxWorkHoursPerWeek} onChange={e => updateNested('eligibilityCriteria.visa.maxWorkHoursPerWeek', e.target.value)} /></div>
+          <div className="form-group"><label><input type="checkbox" checked={form.eligibilityCriteria.visa.healthInsuranceRequired} onChange={e => updateNested('eligibilityCriteria.visa.healthInsuranceRequired', e.target.checked)} /> Health Insurance Required</label></div>
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}><label>Visa Notes</label><textarea className="form-control" rows={2} value={form.eligibilityCriteria.visa.notes} onChange={e => updateNested('eligibilityCriteria.visa.notes', e.target.value)} /></div>
+        </div>
+      )}
+
+      {activeSection === 'documents' && (
+        <div>
+          <h4 className="mb-1">Required Documents</h4>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+            {form.studyGuide.requiredDocuments.map((doc, i) => (
+              <span key={i} className="badge badge-primary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                {doc} <span onClick={() => { const docs = [...form.studyGuide.requiredDocuments]; docs.splice(i, 1); updateNested('studyGuide.requiredDocuments', docs); }} style={{ fontWeight: 'bold' }}>&times;</span>
+              </span>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+            <input className="form-control" value={newDoc} onChange={e => setNewDoc(e.target.value)} placeholder="e.g. Valid Passport" style={{ flex: 1 }} />
+            <button className="btn btn-outline btn-sm" onClick={() => { if (newDoc.trim()) { updateNested('studyGuide.requiredDocuments', [...form.studyGuide.requiredDocuments, newDoc.trim()]); setNewDoc(''); } }}>Add</button>
+          </div>
+
+          <h4 className="mb-1">Visa Process Steps</h4>
+          {form.studyGuide.visaProcess.map((s, i) => (
+            <div key={i} className="card mb-1" style={{ padding: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <strong>Step {s.step}: {s.title}</strong>
+                <button className="btn btn-danger btn-sm" onClick={() => { const steps = [...form.studyGuide.visaProcess]; steps.splice(i, 1); updateNested('studyGuide.visaProcess', steps); }}>Remove</button>
+              </div>
+              <p className="text-sm text-muted mt-1">{s.description}</p>
+            </div>
+          ))}
+          <div className="profile-grid" style={{ marginTop: '0.75rem' }}>
+            <div className="form-group"><label>Step Title</label><input className="form-control" value={newStep.title} onChange={e => setNewStep({ ...newStep, title: e.target.value })} placeholder="e.g. Apply to University" /></div>
+            <div className="form-group"><label>Description</label><input className="form-control" value={newStep.description} onChange={e => setNewStep({ ...newStep, description: e.target.value })} placeholder="Detailed description..." /></div>
+          </div>
+          <button className="btn btn-outline btn-sm" onClick={() => { if (newStep.title) { updateNested('studyGuide.visaProcess', [...form.studyGuide.visaProcess, { step: form.studyGuide.visaProcess.length + 1, ...newStep }]); setNewStep({ title: '', description: '' }); } }}>Add Step</button>
+
+          <h4 className="mb-1 mt-2">Application Timeline</h4>
+          {form.studyGuide.applicationTimeline.map((t, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <strong style={{ minWidth: '100px' }}>{t.month}:</strong> <span>{t.activity}</span>
+              <button className="btn btn-danger btn-sm" onClick={() => { const tl = [...form.studyGuide.applicationTimeline]; tl.splice(i, 1); updateNested('studyGuide.applicationTimeline', tl); }}>x</button>
+            </div>
+          ))}
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <input className="form-control" value={newTimeline.month} onChange={e => setNewTimeline({ ...newTimeline, month: e.target.value })} placeholder="Month (e.g. January)" style={{ width: '140px' }} />
+            <input className="form-control" value={newTimeline.activity} onChange={e => setNewTimeline({ ...newTimeline, activity: e.target.value })} placeholder="Activity" style={{ flex: 1 }} />
+            <button className="btn btn-outline btn-sm" onClick={() => { if (newTimeline.month && newTimeline.activity) { updateNested('studyGuide.applicationTimeline', [...form.studyGuide.applicationTimeline, newTimeline]); setNewTimeline({ month: '', activity: '' }); } }}>Add</button>
+          </div>
+        </div>
+      )}
+
+      {activeSection === 'links' && (
+        <div>
+          <h4 className="mb-1">Official Website Links</h4>
+          <p className="text-sm text-muted mb-2">Add links to official immigration portals, education websites, and embassy pages for quick reference and requirement updates.</p>
+          {form.studyGuide.officialLinks.map((link, i) => (
+            <div key={i} className="card mb-1" style={{ padding: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong>{link.title}</strong>
+                <br /><a href={link.url} target="_blank" rel="noreferrer" className="text-sm" style={{ color: 'var(--color-primary)' }}>{link.url}</a>
+              </div>
+              <button className="btn btn-danger btn-sm" onClick={() => { const links = [...form.studyGuide.officialLinks]; links.splice(i, 1); updateNested('studyGuide.officialLinks', links); }}>Remove</button>
+            </div>
+          ))}
+          <div className="profile-grid" style={{ marginTop: '0.75rem' }}>
+            <div className="form-group"><label>Link Title</label><input className="form-control" value={newLink.title} onChange={e => setNewLink({ ...newLink, title: e.target.value })} placeholder="e.g. DAAD Official Portal" /></div>
+            <div className="form-group"><label>URL</label><input className="form-control" value={newLink.url} onChange={e => setNewLink({ ...newLink, url: e.target.value })} placeholder="https://www.daad.de" /></div>
+          </div>
+          <button className="btn btn-outline btn-sm" onClick={() => { if (newLink.title && newLink.url) { updateNested('studyGuide.officialLinks', [...form.studyGuide.officialLinks, { ...newLink }]); setNewLink({ title: '', url: '' }); } }}>Add Link</button>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+        <button className="btn btn-primary" onClick={handleSubmit} disabled={saving || !form.name || !form.code}>{saving ? 'Saving...' : 'Save Country'}</button>
+        <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
 function CountriesPanel() {
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({});
+  const [adding, setAdding] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => { loadCountries(); }, []);
 
@@ -483,78 +698,91 @@ function CountriesPanel() {
     setLoading(false);
   };
 
-  const handleEdit = (c) => {
-    setEditing(c._id);
-    setForm({
-      name: c.name, code: c.code, description: c.description || '',
-      minimumGPA: c.eligibilityCriteria?.academic?.minimumGPA || '',
-      minimumIELTS: c.eligibilityCriteria?.language?.minimumIELTS || '',
-      minimumTOEFL: c.eligibilityCriteria?.language?.minimumTOEFL || '',
-      minimumBankBalance: c.eligibilityCriteria?.financial?.minimumBankBalance || '',
-    });
+  const handleCreate = async (data) => {
+    setSaving(true);
+    try {
+      await adminAPI.createCountry(data);
+      setMsg('Country added successfully!');
+      setAdding(false);
+      loadCountries();
+    } catch (err) { setMsg('Error: ' + (err.response?.data?.error || 'Failed to create')); }
+    setSaving(false);
+    setTimeout(() => setMsg(''), 3000);
   };
 
-  const handleSave = async () => {
+  const handleUpdate = async (data) => {
+    setSaving(true);
     try {
-      await adminAPI.updateCountry(editing, {
-        name: form.name, description: form.description,
-        'eligibilityCriteria.academic.minimumGPA': Number(form.minimumGPA),
-        'eligibilityCriteria.language.minimumIELTS': Number(form.minimumIELTS),
-        'eligibilityCriteria.language.minimumTOEFL': Number(form.minimumTOEFL),
-        'eligibilityCriteria.financial.minimumBankBalance': Number(form.minimumBankBalance),
-      });
+      await adminAPI.updateCountry(editing, data);
+      setMsg('Country updated successfully!');
       setEditing(null);
       loadCountries();
-    } catch (err) { console.error(err); }
+    } catch (err) { setMsg('Error: ' + (err.response?.data?.error || 'Failed to update')); }
+    setSaving(false);
+    setTimeout(() => setMsg(''), 3000);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this country?')) return;
-    try { await adminAPI.deleteCountry(id); loadCountries(); } catch (err) { console.error(err); }
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Delete ${name}? This cannot be undone.`)) return;
+    try { await adminAPI.deleteCountry(id); setMsg(`${name} deleted`); loadCountries(); } catch (err) { console.error(err); }
+    setTimeout(() => setMsg(''), 3000);
   };
 
   if (loading) return <Loading />;
 
+  const filtered = countries.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.code.toLowerCase().includes(search.toLowerCase()));
+
+  if (adding) return (
+    <div className="animate-fade-in">
+      <h3 className="mb-2">Add New Country</h3>
+      <CountryForm onSave={handleCreate} onCancel={() => setAdding(false)} saving={saving} />
+    </div>
+  );
+
+  if (editing) {
+    const country = countries.find(c => c._id === editing);
+    return (
+      <div className="animate-fade-in">
+        <h3 className="mb-2">Edit: {country?.name}</h3>
+        <CountryForm initial={country} onSave={handleUpdate} onCancel={() => setEditing(null)} saving={saving} />
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in">
-      <h3 className="mb-2">Manage Countries</h3>
+      <div className="flex-between mb-2">
+        <h3>Manage Countries ({countries.length})</h3>
+        <button className="btn btn-primary btn-sm" onClick={() => setAdding(true)}>+ Add Country</button>
+      </div>
+
+      {msg && <div className="card mb-2" style={{ padding: '0.75rem', background: msg.startsWith('Error') ? '#fde2e2' : '#d4edda', color: msg.startsWith('Error') ? '#721c24' : '#155724' }}>{msg}</div>}
+
+      <div className="form-group mb-2">
+        <input className="form-control" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search countries by name or code..." />
+      </div>
+
       <div className="table-wrap">
         <table>
           <thead>
-            <tr>
-              <th>Country</th><th>Code</th><th>Min GPA</th><th>Min IELTS</th><th>Min Bank Balance</th><th>Actions</th>
-            </tr>
+            <tr><th>Country</th><th>Code</th><th>Min GPA</th><th>IELTS</th><th>Bank Balance</th><th>Official Links</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {countries.map((c) => (
+            {filtered.map((c) => (
               <tr key={c._id}>
-                {editing === c._id ? (
-                  <>
-                    <td><input className="form-control" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></td>
-                    <td>{form.code}</td>
-                    <td><input type="number" className="form-control" value={form.minimumGPA} onChange={(e) => setForm({ ...form, minimumGPA: e.target.value })} style={{ width: 80 }} /></td>
-                    <td><input type="number" className="form-control" value={form.minimumIELTS} onChange={(e) => setForm({ ...form, minimumIELTS: e.target.value })} style={{ width: 80 }} /></td>
-                    <td><input type="number" className="form-control" value={form.minimumBankBalance} onChange={(e) => setForm({ ...form, minimumBankBalance: e.target.value })} style={{ width: 110 }} /></td>
-                    <td>
-                      <button className="btn btn-primary btn-sm" onClick={handleSave}>Save</button>{' '}
-                      <button className="btn btn-ghost btn-sm" onClick={() => setEditing(null)}>Cancel</button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td><strong>{c.flagEmoji} {c.name}</strong></td>
-                    <td>{c.code}</td>
-                    <td>{c.eligibilityCriteria?.academic?.minimumGPA}</td>
-                    <td>{c.eligibilityCriteria?.language?.minimumIELTS}</td>
-                    <td>&euro;{c.eligibilityCriteria?.financial?.minimumBankBalance?.toLocaleString()}</td>
-                    <td>
-                      <button className="btn btn-outline btn-sm" onClick={() => handleEdit(c)}>Edit</button>{' '}
-                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(c._id)}>Delete</button>
-                    </td>
-                  </>
-                )}
+                <td><strong>{c.flagEmoji} {c.name}</strong></td>
+                <td>{c.code}</td>
+                <td>{c.eligibilityCriteria?.academic?.minimumGPA || '-'}</td>
+                <td>{c.eligibilityCriteria?.language?.minimumIELTS || '-'}</td>
+                <td>{c.eligibilityCriteria?.financial?.minimumBankBalance ? `${c.eligibilityCriteria.financial.currency || '€'}${c.eligibilityCriteria.financial.minimumBankBalance.toLocaleString()}` : '-'}</td>
+                <td>{c.studyGuide?.officialLinks?.length || 0} links</td>
+                <td>
+                  <button className="btn btn-outline btn-sm" onClick={() => setEditing(c._id)}>Edit</button>{' '}
+                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(c._id, c.name)}>Delete</button>
+                </td>
               </tr>
             ))}
+            {filtered.length === 0 && <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>No countries found. Click "+ Add Country" to add one.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -563,104 +791,243 @@ function CountriesPanel() {
 }
 
 /* =================== Universities =================== */
+function UniversityForm({ initial, countries, onSave, onCancel, saving }) {
+  const [form, setForm] = useState(() => {
+    if (!initial) return { name: '', country: '', city: '', website: '', ranking: '', description: '', tuitionMin: '', tuitionMax: '', currency: 'EUR', languagesOfInstruction: ['English'], scholarshipsAvailable: false, applicationDeadline: '', programs: [] };
+    return {
+      name: initial.name || '', country: initial.country || '', city: initial.city || '', website: initial.website || '', ranking: initial.ranking || '', description: initial.description || '',
+      tuitionMin: initial.tuitionRange?.min || '', tuitionMax: initial.tuitionRange?.max || '', currency: initial.tuitionRange?.currency || 'EUR',
+      languagesOfInstruction: initial.languagesOfInstruction || ['English'], scholarshipsAvailable: initial.scholarshipsAvailable || false,
+      applicationDeadline: initial.applicationDeadline || '', programs: initial.programs || [],
+    };
+  });
+
+  const [newProgram, setNewProgram] = useState({ name: '', level: 'bachelors', field: '', duration: '', language: 'English', tuitionFeePerYear: '', requirements: '' });
+  const [newLang, setNewLang] = useState('');
+  const [showProgForm, setShowProgForm] = useState(false);
+
+  const handleSubmit = () => {
+    const data = {
+      name: form.name, country: form.country, city: form.city, website: form.website, description: form.description,
+      ranking: form.ranking ? Number(form.ranking) : undefined,
+      tuitionRange: { min: Number(form.tuitionMin) || 0, max: Number(form.tuitionMax) || 0, currency: form.currency },
+      languagesOfInstruction: form.languagesOfInstruction, scholarshipsAvailable: form.scholarshipsAvailable,
+      applicationDeadline: form.applicationDeadline, programs: form.programs,
+    };
+    onSave(data);
+  };
+
+  const addProgram = () => {
+    const prog = { ...newProgram, tuitionFeePerYear: Number(newProgram.tuitionFeePerYear) || 0 };
+    setForm({ ...form, programs: [...form.programs, prog] });
+    setNewProgram({ name: '', level: 'bachelors', field: '', duration: '', language: 'English', tuitionFeePerYear: '', requirements: '' });
+    setShowProgForm(false);
+  };
+
+  const removeProgram = (i) => {
+    const progs = [...form.programs];
+    progs.splice(i, 1);
+    setForm({ ...form, programs: progs });
+  };
+
+  return (
+    <div className="card mb-2">
+      <h4 className="mb-2">University Details</h4>
+      <div className="profile-grid">
+        <div className="form-group"><label>University Name *</label><input className="form-control" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Technical University of Munich" /></div>
+        <div className="form-group"><label>Country *</label>
+          {countries.length > 0 ? (
+            <select className="form-control" value={form.country} onChange={e => setForm({ ...form, country: e.target.value })}>
+              <option value="">Select Country</option>
+              {countries.map(c => <option key={c._id} value={c.name}>{c.flagEmoji} {c.name}</option>)}
+            </select>
+          ) : (
+            <input className="form-control" value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} placeholder="e.g. Germany" />
+          )}
+        </div>
+        <div className="form-group"><label>City</label><input className="form-control" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="e.g. Munich" /></div>
+        <div className="form-group"><label>Website URL</label><input className="form-control" value={form.website} onChange={e => setForm({ ...form, website: e.target.value })} placeholder="https://www.tum.de" /></div>
+        <div className="form-group"><label>World Ranking</label><input type="number" className="form-control" value={form.ranking} onChange={e => setForm({ ...form, ranking: e.target.value })} placeholder="e.g. 50" /></div>
+        <div className="form-group"><label>Application Deadline</label><input className="form-control" value={form.applicationDeadline} onChange={e => setForm({ ...form, applicationDeadline: e.target.value })} placeholder="e.g. July 15 / Rolling" /></div>
+        <div className="form-group"><label>Min Tuition ({form.currency}/yr)</label><input type="number" className="form-control" value={form.tuitionMin} onChange={e => setForm({ ...form, tuitionMin: e.target.value })} placeholder="0" /></div>
+        <div className="form-group"><label>Max Tuition ({form.currency}/yr)</label><input type="number" className="form-control" value={form.tuitionMax} onChange={e => setForm({ ...form, tuitionMax: e.target.value })} placeholder="15000" /></div>
+        <div className="form-group"><label>Currency</label><input className="form-control" value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })} placeholder="EUR" style={{ width: '100px' }} /></div>
+        <div className="form-group"><label><input type="checkbox" checked={form.scholarshipsAvailable} onChange={e => setForm({ ...form, scholarshipsAvailable: e.target.checked })} /> Scholarships Available</label></div>
+        <div className="form-group" style={{ gridColumn: '1 / -1' }}><label>Description</label><textarea className="form-control" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Brief description about this university..." /></div>
+      </div>
+
+      <h4 className="mb-1 mt-2">Languages of Instruction</h4>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+        {form.languagesOfInstruction.map((lang, i) => (
+          <span key={i} className="badge badge-primary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            {lang} <span onClick={() => { const langs = [...form.languagesOfInstruction]; langs.splice(i, 1); setForm({ ...form, languagesOfInstruction: langs }); }} style={{ fontWeight: 'bold' }}>&times;</span>
+          </span>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        <input className="form-control" value={newLang} onChange={e => setNewLang(e.target.value)} placeholder="e.g. German" style={{ width: '200px' }} />
+        <button className="btn btn-outline btn-sm" onClick={() => { if (newLang.trim()) { setForm({ ...form, languagesOfInstruction: [...form.languagesOfInstruction, newLang.trim()] }); setNewLang(''); } }}>Add Language</button>
+      </div>
+
+      <div className="flex-between mb-1">
+        <h4>Programs ({form.programs.length})</h4>
+        <button className="btn btn-outline btn-sm" onClick={() => setShowProgForm(!showProgForm)}>{showProgForm ? 'Cancel' : '+ Add Program'}</button>
+      </div>
+
+      {showProgForm && (
+        <div className="card mb-1" style={{ padding: '1rem', background: 'var(--color-surface)' }}>
+          <div className="profile-grid">
+            <div className="form-group"><label>Program Name *</label><input className="form-control" value={newProgram.name} onChange={e => setNewProgram({ ...newProgram, name: e.target.value })} placeholder="e.g. Computer Science" /></div>
+            <div className="form-group"><label>Level</label>
+              <select className="form-control" value={newProgram.level} onChange={e => setNewProgram({ ...newProgram, level: e.target.value })}>
+                <option value="bachelors">Bachelors</option><option value="masters">Masters</option><option value="phd">PhD</option>
+              </select>
+            </div>
+            <div className="form-group"><label>Field</label><input className="form-control" value={newProgram.field} onChange={e => setNewProgram({ ...newProgram, field: e.target.value })} placeholder="e.g. Engineering" /></div>
+            <div className="form-group"><label>Duration</label><input className="form-control" value={newProgram.duration} onChange={e => setNewProgram({ ...newProgram, duration: e.target.value })} placeholder="e.g. 2 years" /></div>
+            <div className="form-group"><label>Language</label><input className="form-control" value={newProgram.language} onChange={e => setNewProgram({ ...newProgram, language: e.target.value })} placeholder="English" /></div>
+            <div className="form-group"><label>Tuition Fee/Year</label><input type="number" className="form-control" value={newProgram.tuitionFeePerYear} onChange={e => setNewProgram({ ...newProgram, tuitionFeePerYear: e.target.value })} placeholder="0" /></div>
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}><label>Requirements</label><input className="form-control" value={newProgram.requirements} onChange={e => setNewProgram({ ...newProgram, requirements: e.target.value })} placeholder="e.g. BSc in related field, GPA 3.0+" /></div>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={addProgram} disabled={!newProgram.name}>Add Program</button>
+        </div>
+      )}
+
+      {form.programs.map((p, i) => (
+        <div key={i} className="card mb-1" style={{ padding: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <strong>{p.name}</strong> <span className="badge badge-primary" style={{ marginLeft: '0.5rem' }}>{p.level}</span>
+            <br /><span className="text-sm text-muted">{p.field} | {p.duration} | {p.language} | {p.tuitionFeePerYear ? `€${p.tuitionFeePerYear.toLocaleString()}/yr` : 'Free'}</span>
+          </div>
+          <button className="btn btn-danger btn-sm" onClick={() => removeProgram(i)}>Remove</button>
+        </div>
+      ))}
+
+      <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+        <button className="btn btn-primary" onClick={handleSubmit} disabled={saving || !form.name || !form.country}>{saving ? 'Saving...' : 'Save University'}</button>
+        <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
 function UniversitiesPanel() {
   const [universities, setUniversities] = useState([]);
+  const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', country: 'Germany', city: '', description: '', tuitionMin: '', tuitionMax: '', website: '' });
+  const [editing, setEditing] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [search, setSearch] = useState('');
+  const [filterCountry, setFilterCountry] = useState('');
 
-  useEffect(() => { loadUniversities(); }, []);
+  useEffect(() => { loadData(); }, []);
 
-  const loadUniversities = async () => {
+  const loadData = async () => {
     try {
-      const res = await adminAPI.getUniversities();
-      setUniversities(res.data.universities);
+      const [uniRes, countryRes] = await Promise.all([adminAPI.getUniversities(), adminAPI.getCountries()]);
+      setUniversities(uniRes.data.universities);
+      setCountries(countryRes.data.countries);
     } catch (err) { console.error(err); }
     setLoading(false);
   };
 
-  const handleAdd = async () => {
+  const handleCreate = async (data) => {
+    setSaving(true);
     try {
-      await adminAPI.createUniversity({
-        name: addForm.name, country: addForm.country, city: addForm.city,
-        description: addForm.description, website: addForm.website,
-        tuitionRange: { min: Number(addForm.tuitionMin), max: Number(addForm.tuitionMax), currency: 'EUR' },
-        languagesOfInstruction: ['English'], programs: [],
-      });
-      setShowAdd(false);
-      setAddForm({ name: '', country: 'Germany', city: '', description: '', tuitionMin: '', tuitionMax: '', website: '' });
-      loadUniversities();
-    } catch (err) { console.error(err); }
+      await adminAPI.createUniversity(data);
+      setMsg('University added!');
+      setAdding(false);
+      loadData();
+    } catch (err) { setMsg('Error: ' + (err.response?.data?.error || 'Failed to create')); }
+    setSaving(false);
+    setTimeout(() => setMsg(''), 3000);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this university?')) return;
-    try { await adminAPI.deleteUniversity(id); loadUniversities(); } catch (err) { console.error(err); }
+  const handleUpdate = async (data) => {
+    setSaving(true);
+    try {
+      await adminAPI.updateUniversity(editing, data);
+      setMsg('University updated!');
+      setEditing(null);
+      loadData();
+    } catch (err) { setMsg('Error: ' + (err.response?.data?.error || 'Failed to update')); }
+    setSaving(false);
+    setTimeout(() => setMsg(''), 3000);
+  };
+
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Delete ${name}?`)) return;
+    try { await adminAPI.deleteUniversity(id); setMsg(`${name} deleted`); loadData(); } catch (err) { console.error(err); }
+    setTimeout(() => setMsg(''), 3000);
   };
 
   if (loading) return <Loading />;
 
+  const filtered = universities.filter(u => {
+    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.city?.toLowerCase().includes(search.toLowerCase());
+    const matchCountry = !filterCountry || u.country === filterCountry;
+    return matchSearch && matchCountry;
+  });
+
+  const countryNames = [...new Set(universities.map(u => u.country))].sort();
+
+  if (adding) return (
+    <div className="animate-fade-in">
+      <h3 className="mb-2">Add New University</h3>
+      <UniversityForm countries={countries} onSave={handleCreate} onCancel={() => setAdding(false)} saving={saving} />
+    </div>
+  );
+
+  if (editing) {
+    const uni = universities.find(u => u._id === editing);
+    return (
+      <div className="animate-fade-in">
+        <h3 className="mb-2">Edit: {uni?.name}</h3>
+        <UniversityForm initial={uni} countries={countries} onSave={handleUpdate} onCancel={() => setEditing(null)} saving={saving} />
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in">
       <div className="flex-between mb-2">
-        <h3>Manage Universities</h3>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}>+ Add University</button>
+        <h3>Manage Universities ({universities.length})</h3>
+        <button className="btn btn-primary btn-sm" onClick={() => setAdding(true)}>+ Add University</button>
       </div>
 
-      {showAdd && (
-        <div className="card mb-2">
-          <h4 className="mb-2">Add New University</h4>
-          <div className="profile-grid">
-            <div className="form-group">
-              <label>Name</label>
-              <input className="form-control" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label>Country</label>
-              <select className="form-control" value={addForm.country} onChange={(e) => setAddForm({ ...addForm, country: e.target.value })}>
-                {['Germany', 'France', 'Italy', 'Netherlands', 'Romania'].map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>City</label>
-              <input className="form-control" value={addForm.city} onChange={(e) => setAddForm({ ...addForm, city: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label>Website</label>
-              <input className="form-control" value={addForm.website} onChange={(e) => setAddForm({ ...addForm, website: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label>Min Tuition (EUR/yr)</label>
-              <input type="number" className="form-control" value={addForm.tuitionMin} onChange={(e) => setAddForm({ ...addForm, tuitionMin: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label>Max Tuition (EUR/yr)</label>
-              <input type="number" className="form-control" value={addForm.tuitionMax} onChange={(e) => setAddForm({ ...addForm, tuitionMax: e.target.value })} />
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button className="btn btn-primary" onClick={handleAdd}>Add University</button>
-            <button className="btn btn-ghost" onClick={() => setShowAdd(false)}>Cancel</button>
-          </div>
-        </div>
-      )}
+      {msg && <div className="card mb-2" style={{ padding: '0.75rem', background: msg.startsWith('Error') ? '#fde2e2' : '#d4edda', color: msg.startsWith('Error') ? '#721c24' : '#155724' }}>{msg}</div>}
+
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
+        <input className="form-control" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or city..." style={{ flex: 1 }} />
+        <select className="form-control" value={filterCountry} onChange={e => setFilterCountry(e.target.value)} style={{ width: '200px' }}>
+          <option value="">All Countries</option>
+          {countryNames.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
 
       <div className="table-wrap">
         <table>
           <thead>
-            <tr><th>University</th><th>Country</th><th>City</th><th>Tuition Range</th><th>Programs</th><th>Actions</th></tr>
+            <tr><th>University</th><th>Country</th><th>City</th><th>Website</th><th>Tuition</th><th>Programs</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {universities.map((u) => (
+            {filtered.map((u) => (
               <tr key={u._id}>
-                <td><strong>{u.name}</strong></td>
+                <td><strong>{u.name}</strong>{u.ranking ? <span className="text-sm text-muted"> (#{u.ranking})</span> : ''}</td>
                 <td>{u.country}</td>
-                <td>{u.city}</td>
-                <td>&euro;{u.tuitionRange?.min?.toLocaleString()} - &euro;{u.tuitionRange?.max?.toLocaleString()}</td>
+                <td>{u.city || '-'}</td>
+                <td>{u.website ? <a href={u.website} target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary)', fontSize: '0.85rem' }}>Visit</a> : '-'}</td>
+                <td>{u.tuitionRange?.max ? `€${u.tuitionRange.min?.toLocaleString()}-€${u.tuitionRange.max?.toLocaleString()}` : '-'}</td>
                 <td>{u.programs?.length || 0}</td>
-                <td><button className="btn btn-danger btn-sm" onClick={() => handleDelete(u._id)}>Delete</button></td>
+                <td>
+                  <button className="btn btn-outline btn-sm" onClick={() => setEditing(u._id)}>Edit</button>{' '}
+                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(u._id, u.name)}>Delete</button>
+                </td>
               </tr>
             ))}
+            {filtered.length === 0 && <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>No universities found. Click "+ Add University" to add one.</td></tr>}
           </tbody>
         </table>
       </div>
